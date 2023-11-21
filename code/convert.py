@@ -15,7 +15,9 @@ def check_tensor(tens: Tensorable, device='cpu') -> torch.Tensor:
     """Tensorable to torch tensor."""
     if isinstance(tens, torch.Tensor):
         return tens
-    return torch.Tensor(tens).to(device)
+    if isinstance(tens, np.ndarray):
+        return torch.from_numpy(tens).float().to(device)
+    return torch.from_numpy(np.array(tens)).float().to(device)
 
 
 def arr_to_th(arr: Arrayable, device) -> torch.Tensor:

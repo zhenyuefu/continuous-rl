@@ -8,7 +8,7 @@ import torch
 from tqdm import tqdm
 
 from abstract import Arrayable
-from envs.env import Env
+from gymnasium import Env
 from agents.agent import Agent
 from agents.on_policy.online_agent import OnlineAgent
 from interact import interact
@@ -17,6 +17,7 @@ from utils import compute_return
 from mylog import log, logto, log_video
 from parse import setup_args
 from config import configure
+
 
 def train(nb_steps: int, env: Env, agent: Agent, start_obs: Arrayable):
     """Trains for one epoch.
@@ -36,7 +37,8 @@ def train(nb_steps: int, env: Env, agent: Agent, start_obs: Arrayable):
         obs, _, _ = interact(env, agent, obs)
     return obs
 
-def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float, # noqa: C901
+
+def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float,  # noqa: C901
              time_limit: Optional[float] = None, eval_return: bool = False,
              progress_bar: bool = False, video: bool = False, no_log: bool = False,
              test: bool = False, eval_policy: bool = True) -> Optional[float]:
@@ -73,7 +75,7 @@ def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float, # n
         nb_steps = int(time_limit / dt)
         info(f"eval> evaluating on a physical time {time_limit}"
              f" ({nb_steps} steps in total)")
-        obs = env.reset()
+        obs, _ = env.reset()
         iter_range = tqdm(range(nb_steps)) if progress_bar else range(nb_steps)
         for _ in iter_range:
             obs, reward, done = interact(env, agent, obs)
@@ -88,7 +90,7 @@ def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float, # n
         if not no_log:
             if not eval_policy:
                 log("Return_noisy", R, epoch)
-            elif not video: # don't log when outputing video
+            elif not video:  # don't log when outputing video
                 if not test:
                     log("Return", R, epoch)
                 else:
@@ -99,6 +101,7 @@ def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float, # n
     if not no_log:
         specific_evaluation(epoch, log_gap, dt, env, agent)
     return R
+
 
 def main(args):
     """Main training procedure."""
@@ -111,12 +114,13 @@ def main(args):
     eval_gap = args.eval_gap
 
     # device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+    device = torch.device('cpu')
 
     agent, env, eval_env = configure(args)
     agent = agent.to(device)
 
-    obs = env.reset()
+    obs, _ = env.reset()
 
     # load checkpoints if directory is not empty
     agent_file = join(logdir, 'best_agent.pt')

@@ -1,12 +1,14 @@
 """Agent-env interactions."""
 from typing import Tuple
 from abstract import Arrayable
-from envs.env import Env
+from gymnasium.vector import VectorEnv
 from agents.agent import Agent
 from numpy import ndarray as array
+import numpy as np
+
 
 def interact(
-        env: Env,
+        env: VectorEnv,
         agent: Agent,
         start_obs: Arrayable) -> Tuple[array, array, array]:
     """One step interaction between env and agent.
@@ -18,7 +20,8 @@ def interact(
     :return: (next observation, reward, terminal?)
     """
     action = agent.step(start_obs)
-    next_obs, reward, done, information = env.step(action)
-    time_limit = information['time_limit'] if 'time_limit' in information else None
-    agent.observe(next_obs, reward, done, time_limit)
+    next_obs, reward, terminated, truncated, information = env.step(action)
+    done = np.logical_or(terminated, truncated)
+    # time_limit = information['time_limit'] if 'time_limit' in information else None
+    agent.observe(next_obs, reward, done, truncated)
     return next_obs, reward, done

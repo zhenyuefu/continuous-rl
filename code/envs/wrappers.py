@@ -1,10 +1,13 @@
 """Env wrappers"""
-from gym import ActionWrapper, Wrapper, logger
-from gym.spaces import Discrete, Box
+import gymnasium as gym
+from gymnasium import Wrapper, logger, ActionWrapper
+from gymnasium.spaces import Discrete, Box
 import numpy as np
+
 
 class WrapPendulum(ActionWrapper):
     """ Wrap pendulum. """
+
     @property
     def action_space(self):
         return Discrete(2)
@@ -16,8 +19,11 @@ class WrapPendulum(ActionWrapper):
     def action(self, action):
         return 4 * np.array(action)[np.newaxis] - 2
 
+
+
 class WrapContinuousPendulum(ActionWrapper):
     """ Wrap Continuous Pendulum. """
+
     @property
     def action_space(self):
         return Box(low=-1, high=1, shape=(1,))
@@ -28,6 +34,7 @@ class WrapContinuousPendulum(ActionWrapper):
 
     def action(self, action):
         return np.clip(2 * action, -2, 2)
+
 
 class TimeLimit(Wrapper):
     def __init__(self, env, max_episode_steps=None):
@@ -54,7 +61,7 @@ class TimeLimit(Wrapper):
 
         if self._past_limit():
             if self.metadata.get('semantics.autoreset'):
-                self.reset() # automatically reset the env
+                self.reset()  # automatically reset the env
             info["time_limit"] = True
             done = True
 

@@ -1,13 +1,14 @@
 """ Environment utilities """
 from abc import ABC, abstractmethod
-import gym
+import gymnasium as gym
 
-from envs.wrappers import TimeLimit
+from gymnasium.wrappers import TimeLimit
 import numpy as np
 from envs.pusher import DiscretePusherEnv, ContinuousPusherEnv
 from envs.hill import HillEnv
 from envs.wrappers import WrapContinuousPendulum, WrapPendulum
 from envs.biped import WalkerHardcore, Walker
+
 
 def tile_images(img_nhwc):
     """
@@ -22,35 +23,41 @@ def tile_images(img_nhwc):
     img_nhwc = np.asarray(img_nhwc)
     N, h, w, c = img_nhwc.shape
     H = int(np.ceil(np.sqrt(N)))
-    W = int(np.ceil(float(N)/H))
-    img_nhwc = np.array(list(img_nhwc) + [img_nhwc[0]*0 for _ in range(N, H*W)])
+    W = int(np.ceil(float(N) / H))
+    img_nhwc = np.array(list(img_nhwc) + [img_nhwc[0] * 0 for _ in range(N, H * W)])
     img_HWhwc = img_nhwc.reshape(H, W, h, w, c)
     img_HhWwc = img_HWhwc.transpose(0, 2, 1, 3, 4)
-    img_Hh_Ww_c = img_HhWwc.reshape(H*h, W*w, c)
+    img_Hh_Ww_c = img_HhWwc.reshape(H * h, W * w, c)
     return img_Hh_Ww_c
+
 
 class AlreadySteppingError(Exception):
     """
     Raised when an asynchronous step is running while
     step_async() is called again.
     """
+
     def __init__(self):
         msg = 'already running an async step'
         Exception.__init__(self, msg)
+
 
 class NotSteppingError(Exception):
     """
     Raised when an asynchronous step is not running but
     step_wait() is called.
     """
+
     def __init__(self):
         msg = 'not running an async step'
         Exception.__init__(self, msg)
+
 
 class VecEnv(ABC):
     """
     An abstract asynchronous, vectorized environment.
     """
+
     def __init__(self, num_envs, observation_space, action_space):
         self.num_envs = num_envs
         self.observation_space = observation_space
@@ -117,11 +124,13 @@ class VecEnv(ABC):
     def unwrapped(self):
         """ Unwraps the environment """
         if isinstance(self, VecEnvWrapper):
-            return self.venv.unwrapped # pylint: disable=E1101
+            return self.venv.unwrapped  # pylint: disable=E1101
         return self
+
 
 class VecEnvWrapper(VecEnv):
     """ Wraps a vectorized environment """
+
     def __init__(self, venv, observation_space=None, action_space=None):
         self.venv = venv
         VecEnv.__init__(self,
@@ -146,10 +155,12 @@ class VecEnvWrapper(VecEnv):
     def render(self, mode='human'):
         self.venv.render(mode)
 
-class CloudpickleWrapper: # pylint: disable=R0903
+
+class CloudpickleWrapper:  # pylint: disable=R0903
     """
     Uses cloudpickle to serialize contents (otherwise multiprocessing tries to use pickle)
     """
+
     def __init__(self, x):
         self.x = x
 
@@ -161,7 +172,8 @@ class CloudpickleWrapper: # pylint: disable=R0903
         import pickle
         self.x = pickle.loads(ob)
 
-def make_env(env_id: str, dt: float, time_limit: float): # noqa: C901
+
+def make_env(env_id: str, dt: float, time_limit: float):  # noqa: C901
     """ Make environment.
 
     :args env_id: id of the environment chosen, among
@@ -174,7 +186,7 @@ def make_env(env_id: str, dt: float, time_limit: float): # noqa: C901
     """
     # pendulum
     if env_id == 'pendulum':
-        env = gym.make('Pendulum-v0').unwrapped
+        env = gym.make('Pendulum-v1').unwrapped
         env.dt = dt
         env = WrapPendulum(env)
     elif env_id == 'cartpole':
@@ -224,5 +236,5 @@ def make_env(env_id: str, dt: float, time_limit: float): # noqa: C901
     else:
         raise NotImplementedError()
     if time_limit is not None:
-        env = TimeLimit(env, max_episode_steps=time_limit / dt)
+        env = TimeLimit(env, max_episode_steps=int(time_limit / dt))
     return env

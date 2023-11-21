@@ -5,7 +5,7 @@ from typing import Optional
 import torch
 from torch import Tensor
 import numpy as np
-from gym.spaces import Box, Discrete
+from gymnasium.spaces import Box, Discrete, MultiDiscrete
 
 from abstract import Arrayable, ParametricFunction, Tensorable
 from actors.actor import Actor

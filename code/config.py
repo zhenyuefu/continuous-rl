@@ -15,8 +15,10 @@ from actors.on_policy.a2c import A2CActor
 from actors.on_policy.ppo import PPOActor
 from critics.on_policy.ppo import PPOCritic
 from critics.on_policy.a2c import A2CCritic
+from gymnasium.vector import AsyncVectorEnv
 
-def configure(args) -> Tuple[Agent, Env, Env]:
+
+def configure(args) -> tuple[Agent, VEnv, VEnv]:
     """
     Takes argparse args and generates the corresponding
     agent, environment and evaluation environment.
@@ -24,8 +26,8 @@ def configure(args) -> Tuple[Agent, Env, Env]:
     env_fn = partial(make_env, env_id=args.env_id,
                      dt=args.dt, time_limit=args.time_limit)
 
-    env: Env = VEnv([env_fn() for _ in range(args.nb_train_env)])
-    eval_env: Env = VEnv([env_fn() for _ in range(args.nb_eval_env)])
+    env = AsyncVectorEnv([lambda:env_fn() for _ in range(args.nb_train_env)])
+    eval_env = AsyncVectorEnv([lambda:env_fn() for _ in range(args.nb_eval_env)])
 
     if args.algo in ["approximate_value", "approximate_advantage",
                      "discrete_value", "discrete_advantage"]:
@@ -38,7 +40,7 @@ def configure(args) -> Tuple[Agent, Env, Env]:
 
         kwargs = dict(
             dt=args.dt, gamma=args.gamma, lr=args.lr, optimizer=args.optimizer,
-            action_space=eval_env.action_space, observation_space=eval_env.observation_space,
+            action_space=eval_env.single_action_space, observation_space=eval_env.single_observation_space,
             nb_layers=args.nb_layers, hidden_size=args.hidden_size,
             normalize=args.normalize_state, weight_decay=args.weight_decay, noise=noise,
             tau=args.tau, noscale=args.noscale
@@ -49,7 +51,7 @@ def configure(args) -> Tuple[Agent, Env, Env]:
             "value": ValueCritic,
         }[critic_type]
 
-        critic = critic_cls.configure(**kwargs) # type: ignore
+        critic = critic_cls.configure(**kwargs)  # type: ignore
         kwargs["critic_function"] = critic.critic_function()
         kwargs["target_critic_function"] = critic.critic_function(target=True)
 
@@ -57,7 +59,7 @@ def configure(args) -> Tuple[Agent, Env, Env]:
             "approximate": ApproximateActor,
             "discrete": DiscreteActor}[actor_type]
 
-        actor = actor_cls.configure(**kwargs) # type: ignore
+        actor = actor_cls.configure(**kwargs)  # type: ignore
 
         agent: Agent = OfflineAgent(
             steps_btw_train=args.steps_btw_train, learn_per_step=args.learn_per_step,

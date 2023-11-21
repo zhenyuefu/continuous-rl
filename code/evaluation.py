@@ -1,14 +1,16 @@
 """Environment specific evaluation."""
 import numpy as np
 import matplotlib.pyplot as plt
+from gymnasium.vector import AsyncVectorEnv
+
 from envs.env import Env
 from agents.agent import Agent
 from agents.off_policy.offline_agent import OfflineAgent
 from envs.hill import HillEnv
 from envs.pusher import AbstractPusher, ContinuousPusherEnv
 from convert import th_to_arr
-from gym.envs.classic_control import PendulumEnv
-from gym.spaces import Box
+from gymnasium.envs.classic_control import PendulumEnv
+from gymnasium.spaces import Box
 from mylog import log_image
 
 
@@ -16,10 +18,12 @@ def specific_evaluation(
         epoch: int,
         log: int,
         dt: float,
-        env: Env,
+        env: AsyncVectorEnv,
         agent: Agent):
 
-    if isinstance(env.envs[0].unwrapped, AbstractPusher): # type: ignore
+    env = env.env_fns[0]()
+
+    if isinstance(env.unwrapped, AbstractPusher): # type: ignore
         nb_pixels = 50
         state_space = np.linspace(-1.5, 1.5, nb_pixels)[:, np.newaxis]
 
@@ -30,7 +34,7 @@ def specific_evaluation(
         plt.plot(state_space, th_to_arr(values))
         plt.subplot(132)
         plt.plot(state_space, th_to_arr(actions))
-        if isinstance(env.envs[0].unwrapped, ContinuousPusherEnv): # type: ignore
+        if isinstance(env.unwrapped, ContinuousPusherEnv): # type: ignore
             action_space = np.linspace(-1, 1, nb_pixels)[:, np.newaxis]
             states, actions = np.meshgrid(state_space, action_space)
             states = states[..., np.newaxis]
@@ -41,7 +45,7 @@ def specific_evaluation(
                 plt.imshow(advantage)
                 log_image('adv', epoch, advantage)
         plt.pause(.1)
-    elif isinstance(env.envs[0].unwrapped, PendulumEnv): # type: ignore
+    elif isinstance(env.unwrapped, PendulumEnv): # type: ignore
         nb_pixels = 50
         theta_space = np.linspace(-np.pi, np.pi, nb_pixels)
         dtheta_space = np.linspace(-10, 10, nb_pixels)
@@ -83,7 +87,7 @@ def specific_evaluation(
             plt.hist(th_to_arr(non_advs).reshape(-1), bins=nb_pixels)
         plt.colorbar()
         plt.pause(.1)
-    elif isinstance(env.envs[0].unwrapped, HillEnv):
+    elif isinstance(env.unwrapped, HillEnv):
         nb_pixels = 50
         state_space = np.linspace(-1, 1, nb_pixels)[:, np.newaxis]
 
@@ -95,7 +99,7 @@ def specific_evaluation(
         plt.plot(state_space, th_to_arr(values))
         plt.subplot(1, 3, 2)
         plt.plot(state_space, th_to_arr(actions))
-        if isinstance(env.envs[0].unwrapped.action_space, Box): # type: ignore
+        if isinstance(env.unwrapped.action_space, Box): # type: ignore
             action_space = np.linspace(-1, 1, nb_pixels)[:, np.newaxis]
             states, actions = np.meshgrid(state_space, action_space)
             states = states[..., np.newaxis]
@@ -105,3 +109,4 @@ def specific_evaluation(
             plt.imshow(th_to_arr(advantages))
             log_image('adv', epoch, th_to_arr(advantages))
         plt.pause(.1)
+    env.close()
