@@ -174,14 +174,14 @@ def make_env(env_id: str, dt: float, time_limit: float): # noqa: C901
     """
     # pendulum
     if env_id == 'pendulum':
-        env = gym.make('Pendulum-v0').unwrapped
+        env = gym.make('Pendulum-v1').unwrapped
         env.dt = dt
         env = WrapPendulum(env)
     elif env_id == 'cartpole':
         env = gym.make('CartPole-v1').unwrapped
         env.tau = dt
     elif env_id == 'continuous_pendulum':
-        env = gym.make('Pendulum-v0').unwrapped
+        env = gym.make('Pendulum-v1').unwrapped
         env.dt = dt
         env = WrapContinuousPendulum(env)
     elif env_id == 'continuous_pusher':

@@ -9,7 +9,7 @@ from os.path import join, exists, isfile, dirname
 from typing import Dict
 import pickle
 import numpy as np
-from scipy.misc import toimage
+from PIL import Image
 
 from logging import info
 
@@ -123,9 +123,10 @@ class Logger:
     def log_image(self, tag: str, timestamp: int, image):
         """Log 3D (T, H, W) numpy array as an image."""
         img_dir = join(self._dir, "imgs")
+        image = image.astype(np.uint8)
         if not exists(img_dir):
             makedirs(img_dir)
-        toimage(image).save(join(img_dir, f"{tag}_{timestamp}.png"))
+        Image.fromarray(image).save(join(img_dir, f"{tag}_{timestamp}.png"))
 
     def set_dir(self, logdir: str, reload: bool = True):
         """Set logging directory.

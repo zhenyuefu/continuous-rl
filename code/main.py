@@ -13,10 +13,30 @@ from agents.agent import Agent
 from agents.on_policy.online_agent import OnlineAgent
 from interact import interact
 from evaluation import specific_evaluation
+from memory.buffer import MemorySampler
 from utils import compute_return
 from mylog import log, logto, log_video
 from parse import setup_args
 from config import configure
+
+import h5py
+
+
+def save_pendulum_dataset(buffer: MemorySampler, filename):
+    """
+    Save MemorySampler data to an HDF5 file in a format compatible with the load_pendulum_dataset function.
+
+    :param buffer: Instance of MemorySampler (your replay buffer).
+    :param filename: Name of the HDF5 file to save the data.
+    """
+    # 这里我们假设 buffer 中的数据已经是适合 Pendulum 问题的格式
+    with h5py.File(filename, 'w') as f:
+        f.create_dataset('obs', data=buffer._obs.astype(np.float32))
+        f.create_dataset('actions', data=buffer._action.astype(np.float32))
+        f.create_dataset('next_obs', data=buffer._next_obs.astype(np.float32))
+        f.create_dataset('rewards', data=buffer._reward.astype(np.float32))
+        f.create_dataset('dones', data=buffer._done.astype(np.float32))
+
 
 def train(nb_steps: int, env: Env, agent: Agent, start_obs: Arrayable):
     """Trains for one epoch.
@@ -36,9 +56,10 @@ def train(nb_steps: int, env: Env, agent: Agent, start_obs: Arrayable):
         obs, _, _ = interact(env, agent, obs)
     return obs
 
-def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float, # noqa: C901
+
+def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float,  # noqa: C901
              time_limit: Optional[float] = None, eval_return: bool = False,
-             progress_bar: bool = False, video: bool = False, no_log: bool = False,
+             progress_bar: bool = True, video: bool = False, no_log: bool = True,
              test: bool = False, eval_policy: bool = True) -> Optional[float]:
     """Evaluate agent in environment.
 
@@ -88,7 +109,7 @@ def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float, # n
         if not no_log:
             if not eval_policy:
                 log("Return_noisy", R, epoch)
-            elif not video: # don't log when outputing video
+            elif not video:  # don't log when outputing video
                 if not test:
                     log("Return", R, epoch)
                 else:
@@ -99,6 +120,7 @@ def evaluate(dt: float, epoch: int, env: Env, agent: Agent, eval_gap: float, # n
     if not no_log:
         specific_evaluation(epoch, log_gap, dt, env, agent)
     return R
+
 
 def main(args):
     """Main training procedure."""
@@ -111,7 +133,7 @@ def main(args):
     eval_gap = args.eval_gap
 
     # device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
 
     agent, env, eval_env = configure(args)
     agent = agent.to(device)
@@ -176,6 +198,7 @@ def main(args):
                 state_dict["epoch"] = e
                 torch.save(state_dict, agent_file)
                 R = new_R
+    save_pendulum_dataset(agent._sampler, '../pendulum_dataset_02.hdf5')
     env.close()
     eval_env.close()
 
