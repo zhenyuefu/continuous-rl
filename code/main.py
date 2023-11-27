@@ -29,7 +29,6 @@ def save_pendulum_dataset(buffer: MemorySampler, filename):
     :param buffer: Instance of MemorySampler (your replay buffer).
     :param filename: Name of the HDF5 file to save the data.
     """
-    # 这里我们假设 buffer 中的数据已经是适合 Pendulum 问题的格式
     with h5py.File(filename, 'w') as f:
         f.create_dataset('obs', data=buffer._obs.astype(np.float32))
         f.create_dataset('actions', data=buffer._action.astype(np.float32))
