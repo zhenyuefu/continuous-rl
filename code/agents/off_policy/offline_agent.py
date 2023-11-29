@@ -1,4 +1,7 @@
 from typing import Optional
+
+import torch
+
 from abstract import Arrayable, Tensorable
 from cudaable import Cudaable
 from stateful import StateDict

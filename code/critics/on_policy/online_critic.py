@@ -15,7 +15,7 @@ class OnlineCritic(CompoundStateful):
         self._reference_obs: Tensor = None
         self._v_function = v_function
         self._gamma = gamma ** dt
-        self._device = 'cpu'
+        self._device = 'mps'
         self._dt = dt
         info(f"setup> using OnlineCritic, the provided gamma and rewards are scaled,"
              f" actual values: gamma={gamma ** dt}, rewards=original_rewards * {dt}")

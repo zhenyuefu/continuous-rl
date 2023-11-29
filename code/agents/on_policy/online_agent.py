@@ -35,7 +35,7 @@ class OnlineAgent(CompoundStateful, Agent):
         self._critic = critic
         self._count = 0
         self._T = T
-        self._device = "cpu"
+        self._device = "mps"
         self.reset()
 
         # init _nb_train_env and _current_trajectories to None

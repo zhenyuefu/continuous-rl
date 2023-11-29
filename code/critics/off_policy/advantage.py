@@ -35,10 +35,12 @@ class AdvantageCritic(CompoundStateful, OfflineCritic):
                  val_function: ParametricFunction, adv_function: ParametricFunction) -> None:
         CompoundStateful.__init__(self)
         self._reference_obs: Tensor = None
-        self._val_function = val_function
-        self._adv_function = adv_function
-        self._target_val_function = copy.deepcopy(val_function)
-        self._target_adv_function = copy.deepcopy(adv_function)
+        adv_function = torch.compile(adv_function)
+        val_function = torch.compile(val_function)
+        self._val_function = val_function.to('mps')
+        self._adv_function = adv_function.to('mps')
+        self._target_val_function = copy.deepcopy(val_function).to('mps')
+        self._target_adv_function = copy.deepcopy(adv_function).to('mps')
 
         self._adv_optimizer = \
             setup_optimizer(self._adv_function.parameters(),
@@ -57,7 +59,7 @@ class AdvantageCritic(CompoundStateful, OfflineCritic):
         info(f"setup> using AdvantageCritic, the provided gamma and rewards are scaled,"
              f" actual values: gamma={gamma ** dt}, rewards=original_rewards * {dt}")
 
-        self._device = 'cpu'
+        self._device = 'mps'
 
     def optimize(self, obs: Arrayable, action: Arrayable, max_action: Tensor,
                  next_obs: Arrayable, max_next_action: Tensor, reward: Arrayable,

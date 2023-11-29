@@ -5,6 +5,8 @@ from os.path import join, exists
 from logging import info, basicConfig, INFO
 import numpy as np
 import torch
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
 from tqdm import tqdm
 
 from abstract import Arrayable
@@ -132,7 +134,7 @@ def main(args):
     eval_gap = args.eval_gap
 
     # device
-    device = torch.device('cpu')
+    device = torch.device('mps')
 
     agent, env, eval_env = configure(args)
     agent = agent.to(device)
@@ -197,7 +199,7 @@ def main(args):
                 state_dict["epoch"] = e
                 torch.save(state_dict, agent_file)
                 R = new_R
-    save_pendulum_dataset(agent._sampler, '../pendulum_dataset_02.hdf5')
+    save_pendulum_dataset(agent._sampler, '../pendulum_dataset_005.hdf5')
     env.close()
     eval_env.close()
 

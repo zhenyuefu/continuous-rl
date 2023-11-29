@@ -1,4 +1,6 @@
 import copy
+
+import torch
 from torch import Tensor
 from gym.spaces import Box
 from models import ContinuousPolicyMLP, NormalizedMLP
@@ -28,13 +30,14 @@ class ApproximateActor(CompoundStateful, Actor):
                  noise: Noise, lr: float, tau: float, opt_name: str, dt: float,
                  weight_decay: float) -> None:
         CompoundStateful.__init__(self)
-        self._policy_function = policy_function
-        self._target_policy_function = copy.deepcopy(self._policy_function)
+        policy_function = torch.compile(policy_function)
+        self._policy_function = policy_function.to('mps')
+        self._target_policy_function = copy.deepcopy(self._policy_function).to('mps')
 
         self._optimizer = setup_optimizer(
             self._policy_function.parameters(), opt_name=opt_name,
             lr=lr, dt=dt, inverse_gradient_magnitude=1, weight_decay=weight_decay)
-        self._noise = noise
+        self._noise = noise.to('mps')
         self._tau = tau
 
     def to(self, device):
@@ -83,5 +86,6 @@ class ApproximateActor(CompoundStateful, Actor):
             nb_inputs=nb_state_feats, nb_outputs=nb_actions, **net_dict)
         if kwargs['normalize']:
             policy_function = NormalizedMLP(policy_function)
+        policy_function = policy_function
         return ApproximateActor(policy_function, kwargs['noise'], kwargs['lr'], kwargs['tau'],
                                 kwargs['optimizer'], kwargs['dt'], kwargs['weight_decay'])

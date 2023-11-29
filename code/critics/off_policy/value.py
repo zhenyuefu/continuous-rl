@@ -57,7 +57,7 @@ class ValueCritic(CompoundStateful, OfflineCritic):
                             inverse_gradient_magnitude=self._dt,
                             weight_decay=0)
 
-        self._device = 'cpu'
+        self._device = 'mps'
 
     def optimize(self, obs: Arrayable, action: Arrayable, max_action: Tensor,
                  next_obs: Arrayable, max_next_action: Tensor, reward: Arrayable,
