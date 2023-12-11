@@ -132,7 +132,7 @@ def main(args):
     eval_gap = args.eval_gap
 
     # device
-    device = torch.device('cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     agent, env, eval_env = configure(args)
     agent = agent.to(device)
@@ -197,7 +197,7 @@ def main(args):
                 state_dict["epoch"] = e
                 torch.save(state_dict, agent_file)
                 R = new_R
-    save_pendulum_dataset(agent._sampler, '../pendulum_dataset_02.hdf5')
+    save_pendulum_dataset(agent._sampler, f'../pendulum_dataset_{str(dt)[2:]}.hdf5')
     env.close()
     eval_env.close()
 
